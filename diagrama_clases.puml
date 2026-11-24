@@ -1,0 +1,342 @@
+@startuml
+title Tute - Diagrama de clases
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty members
+
+' =====================================================
+' PAQUETE OBSERVER
+' =====================================================
+package observer {
+  interface IObservable {
+    +agregarObservador(o : IObservador)
+    +removerObservador(o : IObservador)
+    +notificarObservadores(evento : Object)
+  }
+
+  interface IObservador {
+    +actualizar(observable : IObservable, e : Object)
+  }
+
+  abstract class Observable {
+    -observadores : List<IObservador>
+    +agregarObservador(o : IObservador)
+    +removerObservador(o : IObservador)
+    +notificarObservadores(evento : Object)
+  }
+}
+
+' =====================================================
+' PAQUETE MODELO
+' =====================================================
+package modelo {
+
+  enum Palo {
+    BASTOS
+    ORO
+    ESPADAS
+    COPAS
+  }
+
+  enum Valor {
+    ANCHO
+    DOS
+    TRES
+    CUATRO
+    CINCO
+    SEIS
+    SIETE
+    SOTA
+    CABALLO
+    REY
+    --
+    -poder : int
+    +getPoder() : int
+  }
+
+  enum Obligacion {
+    SALIDA_LIBRE
+    MONTAR
+    ASISTIR
+    FALLAR
+    PISAR
+    DESCARTE
+  }
+
+  enum Eventos {
+    INICIAR_EL_JUEGO
+    TERMINAR_EL_JUEGO
+    TIRAR_CARTA
+    CANTAR
+    CANTAR_TUTE
+    AGREGAR_JUGADOR
+    FIN_BAZA
+    CAMBIO_TURNO
+  }
+
+  class SInCartasException {
+    +SInCartasException(message : String)
+  }
+
+  interface ICarta {
+    +getPoder() : int
+    +getPalo() : Palo
+    +getPuntos() : int
+    +getValor() : Valor
+  }
+
+  interface IJugador {
+    +getId() : int
+    +getNombre() : String
+    +getCantidadPuntos() : int
+    +getCantidadCartas() : int
+    +getMano() : List<ICarta>
+    +getCantes() : Set<Palo>
+    +getTute() : Set<Valor>
+  }
+
+  class Carta {
+    -palo : Palo
+    -valor : Valor
+    -puntos : int
+    -poder : int
+    +Carta(unPalo : Palo, unValor : Valor)
+    +getPalo() : Palo
+    +getValor() : Valor
+    +calcPuntos() : int
+    +getPuntos() : int
+    +getPoder() : int
+    +equals(obj : Object) : boolean
+    +hashCode() : int
+  }
+
+  class Jugador {
+    -nombre : String
+    -cartasDelJugador : List<Carta>
+    -cantidadPuntos : int
+    -{static} numeroDeJugadoresCreados : int
+    -id : int
+    +Jugador(unNombre : String, cartas : List<Carta>)
+    +getNombre() : String
+    +getCartasDelJugador() : List<Carta>
+    +getId() : int
+    +getCantidadPuntos() : int
+    +getCantidadCartas() : int
+    +tirarCarta(laCartaAtirar : Carta)
+    +sumarCantidadPuntos(unaCantidadPuntos : int)
+    +agregarCarta(aAgregar : Carta)
+    +getCantes() : Set<Palo>
+    +getTute() : Set<Valor>
+    +getMano() : List<ICarta>
+    -tieneCuatroCartasDelMismoValor(v : Valor) : boolean
+  }
+
+  class Mazo {
+    -listCartas : List<Carta>
+    +Mazo()
+    -llenarMazo()
+    -barajarMazo()
+    +getCantCartas() : int
+    +existeLaCarta(card : Carta) : boolean
+    +getSigCarta() : Carta
+    +getVerSigCarta() : Carta
+  }
+
+  class Baza {
+    -cartasJugadas : Map<Jugador, Carta>
+    -paloDelaBaza : Palo
+    -ganador : Jugador
+    +getPaloDelaBaza() : Palo
+    +getGanador() : Jugador
+    +setGanador(j : Jugador)
+    +getCartasJugadas() : Map<Jugador, Carta>
+    +agregarJugada(jugador : Jugador, carta : Carta)
+    +getCartas() : List<Carta>
+    +estaCompleta() : boolean
+    +getCartaDe(j : Jugador) : Carta
+  }
+
+  class Reglas {
+    +determinarObligacion(b : Baza, mano : List<Carta>, triunfo : Palo) : Obligacion
+    +decidirJugadorGanador(b : Baza, triunfo : Palo) : Jugador
+    +cartasJugables(b : Baza, mano : List<Carta>, triunfo : Palo) : List<Carta>
+    +puntosDeCante(palo : Palo, triunfo : Palo) : int
+    +puedeCantar(j : Jugador, ganadorUltimaBaza : Jugador, b : Baza, palo : Palo, cantesRealizados : Set<Palo>) : boolean
+    +puedeCantarTute(j : Jugador, ganadorUltimaBaza : Jugador, b : Baza, valor : Valor) : boolean
+    -buscarPorPalo(palo : Palo, mano : List<Carta>) : List<Carta>
+    -cartasQueSuperan(cartas : List<Carta>, referencia : Carta) : List<Carta>
+  }
+
+  class Juego {
+    -{static} CANTIDAD_JUGADORES : int = 4
+    -{static} BAZAS_POR_RONDA : int = 10
+    -jugadores : List<Jugador>
+    -reglas : Reglas
+    -mazo : Mazo
+    -paloTriunfo : Palo
+    -bazaActual : Baza
+    -bazasJugadas : List<Baza>
+    -turnoActual : int
+    -ganadorUltimaBaza : Jugador
+    -cantesRealizados : Set<Palo>
+    -ganadores : List<Jugador>
+    -juegoTerminado : boolean
+    +Juego()
+    +agregarJugador(nombre : String) : IJugador
+    +iniciarJuego()
+    +jugarCarta(jugador : IJugador, carta : ICarta)
+    +cantar(j : IJugador, palo : Palo) : boolean
+    +declacarTute(jugador : IJugador, valor : Valor) : boolean
+    +getJugadorEnTurno() : IJugador
+    +getGanadorUltimaBaza() : IJugador
+    +getCartasJugables(j : IJugador) : List<ICarta>
+    +getCartaTirada(jugador : IJugador) : ICarta
+    +getListaJugadores() : List<IJugador>
+    +getGanadores() : List<IJugador>
+    +getPuntosPareja(pareja : int) : int
+    +getPaloTriunfo() : Palo
+    -estaEnCurso() : boolean
+    -resolverBaza()
+    -terminarJuego()
+    -buscarJugador(jugador : IJugador) : Jugador
+  }
+}
+
+' =====================================================
+' PAQUETE VISTA
+' =====================================================
+package vista {
+  interface IVista {
+    +mostrarJugadores(jugadores : List<IJugador>)
+    +mostrarMano(mano : List<ICarta>)
+    +mostrarTurno(jugador : IJugador)
+    +mostrarCartaTirada(jugador : IJugador, carta : ICarta)
+    +mostrarFinBaza(ganador : IJugador)
+    +mostrarFinJuego(ganadores : List<IJugador>)
+    +mostrarError(mensaje : String)
+    +mostrarCante(jugador : IJugador, palo : Palo)
+    +mostrarCanteTute(jugador : IJugador)
+    +iniciar()
+  }
+
+  class VistaConsola {
+    -{static} CANTIDAD_JUGADORES : int = 4
+    -controlador : Controlador
+    -scanner : Scanner
+    -jugadores : List<IJugador>
+    -manoActual : List<ICarta>
+    -mesa : List<String>
+    -jugadorEnTurno : IJugador
+    -primerTurno : boolean
+    -juegoTerminado : boolean
+    +VistaConsola(controlador : Controlador)
+    +iniciar()
+    -pedirOpcion() : String
+    -procesarOpcion(opcion : String)
+    -jugarCarta()
+    -cantar()
+    -declararTute()
+    -pedirNumero(mensaje : String, max : int) : Integer
+    -descripcion(carta : ICarta) : String
+    -numeroDeAsiento(jugador : IJugador) : int
+    -nombresPareja(pareja : int) : String
+    -limpiarPantalla()
+  }
+}
+
+' =====================================================
+' PAQUETE CONTROLADOR
+' =====================================================
+package controlador {
+  class Controlador {
+    -vista : IVista
+    -juego : Juego
+    -finMostrado : boolean
+    +Controlador(juego : Juego)
+    +setVista(vista : IVista)
+    +agregarJugador(nombre : String)
+    +iniciarJuego()
+    +jugarCarta(carta : ICarta)
+    +cantar(palo : Palo)
+    +declararTute(valor : Valor)
+    +getPaloTriunfo() : Palo
+    +getPuntosPareja(pareja : int) : int
+    +getCartasJugables() : List<ICarta>
+    +actualizar(observable : IObservable, e : Object)
+    -error(ex : RuntimeException)
+  }
+}
+
+' =====================================================
+' CLASE PRINCIPAL
+' =====================================================
+class Tute {
+  +{static} main(args : String[])
+}
+
+' =====================================================
+' RELACIONES
+' =====================================================
+
+' --- observer ---
+Observable ..|> IObservable
+Juego --|> Observable
+IObservable ..> IObservador : notifica
+
+' --- interfaces del modelo ---
+Carta ..|> ICarta
+Jugador ..|> IJugador
+IJugador ..> ICarta : getMano
+ICarta ..> Palo
+ICarta ..> Valor
+
+' --- composicion del modelo ---
+Carta --> Palo : palo
+Carta --> Valor : valor
+Mazo "1" *-- "0..40" Carta : listCartas
+Jugador "1" o-- "0..10" Carta : cartasDelJugador
+Baza "1" o-- "0..4" Carta : cartasJugadas
+Baza "1" --> "0..4" Jugador : cartasJugadas
+Baza "1" --> "0..1" Jugador : ganador
+Baza --> Palo : paloDelaBaza
+
+Juego "1" *-- "4" Jugador : jugadores
+Juego "1" *-- "1" Mazo : mazo
+Juego "1" *-- "1" Reglas : reglas
+Juego "1" *-- "0..1" Baza : bazaActual
+Juego "1" *-- "0..10" Baza : bazasJugadas
+Juego "1" --> "0..1" Jugador : ganadorUltimaBaza
+Juego "1" --> "0..4" Jugador : ganadores
+Juego --> Palo : paloTriunfo
+Juego ..> Eventos : notifica
+Juego ..> IJugador
+Juego ..> ICarta
+
+' --- reglas ---
+Reglas ..> Baza
+Reglas ..> Jugador
+Reglas ..> Carta
+Reglas ..> Obligacion
+Mazo ..> SInCartasException : <<throws>>
+
+' --- controlador y vista ---
+Controlador ..|> IObservador
+Controlador --> "1" Juego : juego
+Controlador --> "1" IVista : vista
+Controlador ..> Eventos
+Controlador ..> IJugador
+Controlador ..> ICarta
+
+VistaConsola ..|> IVista
+VistaConsola --> "1" Controlador : controlador
+IVista ..> IJugador
+IVista ..> ICarta
+IVista ..> Palo
+
+' --- main ---
+Tute ..> Juego : crea
+Tute ..> Controlador : crea
+Tute ..> VistaConsola : crea
+Tute ..> IVista
+
+@enduml
